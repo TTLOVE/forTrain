@@ -15,5 +15,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('login', 'HomeController@login');
-Route::post('goLogin', 'HomeController@checkCha');
+Route::get('index', 'HomeController@index');
+Route::get('user', 'HomeController@getUserInfo');
+Route::post('login', 'HomeController@login');

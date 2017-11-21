@@ -5,7 +5,7 @@
     <title>获取位置</title>
     <style>
         *{ padding: 0; margin:0; }
-        #box{ width: 293px; height: 190px; }
+        #box{ width: 500px; height: 300px; }
         .icon{ 
             position: absolute; left: 0; top: 0; width: 20px; height: 20px; 
             background: url("img/favicon.png") no-repeat; 
@@ -17,7 +17,7 @@
     <div id="box">
     <img src="{{$imgUrl}}" alt="" />
     </div>
-    <form action="./goLogin" method="post">
+    <form action="./login" method="post">
         {!! csrf_field() !!}            
         <input id="location" type="text" name="randCode" />
         <input type="hidden" name="rand" value="" />
