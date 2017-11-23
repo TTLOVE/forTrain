@@ -152,7 +152,7 @@ class HomeController extends Controller
         $varString = substr($initData, $startNum, $endNum-$startNum);
         $theToken = substr($varString, 31, 32);
 
-        // 获取我的乘客列表
+        // 获取我的常用联系人列表
         $getPassengerListQuery = [
             '_json_att' => '',
             'REPEAT_SUBMIT_TOKEN' => $theToken
@@ -163,9 +163,18 @@ class HomeController extends Controller
         var_export($passengerList);
         echo "<br><br>";
 
-        // 预提交订单
-        $preAddOrderUrl = "https://kyfw.12306.cn/otn/confirmPassenger/checkOrderInfo";
-        $preAddOrderQuery = [
+        // 获取乘客买票验证码
+        $imageUrl = "https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=passenger&rand=randp&0.757505074609071";
+        $savePath = "storage/framework/cache/image.jpg";
+        $imagePath = $this->getPicAndSave($imageUrl, $savePath);
+
+        // 购票人确定
+        // passengerTicketStr组成的格式：seatType,0,票类型（成人票填1）,乘客名,passenger_id_type_code,passenger_id_no,mobile_no,’N’
+        // 座位编号（seatType）参考：‘硬卧’ => ‘3’,‘软卧’ => ‘4’,‘二等座’ => ‘O’,‘一等座’ => ‘M’,‘硬座’ => ‘1’,多个乘车人用’_’隔开
+        // oldPassengerStr组成的格式：乘客名,passenger_id_type_code,passenger_id_no,passenger_type，’_’
+        // 多个乘车人用’_’隔开，注意最后的需要多加一个’_’。
+        $confirmPassengerUrl = "https://kyfw.12306.cn/otn/confirmPassenger/checkOrderInfo";
+        $confirmPassengerQuery = [
             'cancel_flag' => '2',
             'bed_level_order_num' => '000000000000000000000000000000',
             'passengerTicketStr' => '1,0,1,朱雁宗,1,440981199209200231,13672476388,N_1,0,1,程恒,1,440981199201181128,13672476388,N',
@@ -175,10 +184,25 @@ class HomeController extends Controller
             '_json_att' => '',
             'REPEAT_SUBMIT_TOKEN' => $theToken
         ];
-        $preAddOrderData = $this->postData($preAddOrderUrl, $preAddOrderQuery);
+        $confirmPassengerData = $this->postData($confirmPassengerUrl, $confirmPassengerQuery);
         echo "<br><br>";
-        var_export($preAddOrderData);
+        var_export($confirmPassengerData);
         echo "<br><br>";
+        // 如果申请成功，往下走，失败的话，重新登录
+        if ( isset($confirmPassengerData['status']) && $confirmPassengerData['status']==true && isset($confirmPassengerData['data']['submitStatus']) && $confirmPassengerData['data']['submitStatus']==true ) {
+            // 获取是否要提交验证码的判断
+            $ifShowPassCode = $confirmPassengerData['data']['ifShowPassCode'];
+
+            // 准备进入排队
+            $queueCountUrl = "https://kyfw.12306.cn/otn/confirmPassenger/getQueueCount";
+            $queueCountQuery = [
+            ];
+        } else {
+            echo "<br><br>";
+            var_export($preAddOrderData);
+            echo "<br><br>";
+            exit;
+        }
         exit;
     }
 
