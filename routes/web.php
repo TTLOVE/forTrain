@@ -16,5 +16,7 @@ Route::get('/', function () {
 });
 
 Route::get('index', 'HomeController@index');
-Route::get('user', 'HomeController@getUserInfo');
+Route::get('list', 'HomeController@getTrainList');
+Route::get('addOrder', 'HomeController@addOrder');
+Route::get('addOrderNow', 'HomeController@addOrderNow');
 Route::post('login', 'HomeController@login');

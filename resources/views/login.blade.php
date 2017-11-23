@@ -20,9 +20,7 @@
     <form action="./login" method="post">
         {!! csrf_field() !!}            
         <input id="location" type="text" name="randCode" />
-        <input type="hidden" name="rand" value="" />
-        <input type="hidden" name="loginUserDTO.user_name" value="348977791@qq.com" />
-        <input type="hidden" name="serDTO.password" value="qq6661726" />
+        <input type="hidden" name="comeFrom" @if (session('comeFrom'))value="{{session('comeFrom')}}" @else value="" @endif />
         <input id="btn" type="submit" value="提交">
     </form>
 
