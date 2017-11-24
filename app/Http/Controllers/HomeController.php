@@ -39,7 +39,7 @@ class HomeController extends Controller
             echo "\n\n";
             var_export("数据为空,请重新请求");
             echo "\n\n";
-            //return redirect('index');
+            return redirect('index');
         }
 
         // 校验验证码
@@ -64,6 +64,12 @@ class HomeController extends Controller
             $loginResult = $this->postData($loginUrl, $loginData);
             // 如果模拟登录成功
             if ( isset($loginResult['result_code']) && $loginResult['result_code']==0 ) {
+                // 去登录页面
+                $loginAUrl = "https://kyfw.12306.cn/otn/login/userLogin";
+                $loginAData = ['_json_att'=>''];
+                $loginAResultData = $this->postData($loginAUrl, $loginAData);
+                $loginBUrl = "https://kyfw.12306.cn/otn/index/initMy12306";
+                $loginBResultData = $this->getData($loginBUrl);
                 // 模拟下单
                 return redirect('addOrderNow');
             } else {
@@ -74,7 +80,7 @@ class HomeController extends Controller
             echo "<br\><br\>";
             var_export($captchaResult);
             echo "<br\><br\>";
-            //return redirect('index');
+            return redirect('index');
         }
     }
 
@@ -140,17 +146,77 @@ class HomeController extends Controller
         $checkUserUrl = "https://kyfw.12306.cn/otn/login/checkUser";
         $checkUserReturnData = $this->getData($checkUserUrl);
         echo "<br><br>";
+        echo $checkUserUrl;
+        echo "<br><br>";
         var_export($checkUserReturnData);
+        echo "<br><br>";
+
+        // 查看火车余票
+        $dateTime = "2017-11-29";
+        $from = "GZQ";
+        $to = "MDQ";
+        // log请求
+        $trainLogUrl = "https://kyfw.12306.cn/otn/leftTicket/log?leftTicketDTO.train_date=" . $dateTime .
+            "&leftTicketDTO.from_station=" . $from . "&leftTicketDTO.to_station=" . $to . "&purpose_codes=ADULT";
+        $trainLogData = $this->getData($trainLogUrl);
+        // 余票列表查询
+        $trainListUrl = "https://kyfw.12306.cn/otn/leftTicket/query?leftTicketDTO.train_date=" . $dateTime . 
+            "&leftTicketDTO.from_station=" . $from . "&leftTicketDTO.to_station=" . $to . "&purpose_codes=ADULT";
+        $trainList = $this->getData($trainListUrl);
+        $trains = [];
+        if ( isset($trainList['status']) && $trainList['status']==true  && isset($trainList['data']['result']) && !empty($trainList['data']['result'])) {
+            $trainArray = $trainList['data']['result'];
+            foreach ($trainArray as $key => $train) {
+                $trainData = explode("|", $train);
+                $ticketKey = $trainData[29];
+                if ( $ticketKey=="有" || $ticketKey>2 ) {
+                    $trains[] = [
+                        'train' => $trainData[3],
+                        'num' => $trainData[29],
+                        'carStr' => urldecode($trainData[0]),
+                        'trainNo' => $trainData[2],
+                        'leftTicket' => $trainData[12],
+                        'train_location' => $trainData[15],
+                    ];
+                }
+            }
+        }
+        echo $trainListUrl;
+        echo "<br><br>";
+        var_export($trains[0]);
+        echo "<br><br>";
+
+        // 获取乘客买票验证码
+        $imageUrl = "https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=passenger&rand=randp&0.757505074609071";
+        $savePath = "storage/framework/cache/image.jpg";
+        $imagePath = $this->getPicAndSave($imageUrl, $savePath);
+
+        // 预提交订单
+        $preAddOrderUrl = "https://kyfw.12306.cn/otn/leftTicket/submitOrderRequest";
+        $preAddOrderQuery = [
+            'secretStr' => $trains[0]['carStr'],
+            'train_date' => $dateTime,
+            'back_train_date' => '2017-11-24',
+            'tour_flag' => 'dc',
+            'purpose_codes' => 'ADULT',
+            'query_from_station_name' => '广州',
+            'query_to_station_name' => '茂名',
+            'undefined' => ''
+        ];
+        $preAddOrderData = $this->postData($preAddOrderUrl, $preAddOrderQuery);
+        echo $preAddOrderUrl;
+        echo "<br><br>";
+        var_export($preAddOrderData);
         echo "<br><br>";
 
         // 初始化页面,获取token
         $initUrl = "https://kyfw.12306.cn/otn/confirmPassenger/initDc";
         $initQuery = ['_json_att'=>''];
         $initData = $this->postData($initUrl, $initQuery);
-        $startNum = stripos($initData, "var globalRepeatSubmitToken = ");
-        $endNum = stripos($initData, "var global_lang");
-        $varString = substr($initData, $startNum, $endNum-$startNum);
-        $theToken = substr($varString, 31, 32);
+        preg_match("/var globalRepeatSubmitToken = '(.*?)';/", $initData, $theTokenArray);
+        preg_match("/'key_check_isChange':'(.*?)'/", $initData, $keyCheckArray);
+        $theToken = $theTokenArray[1];
+        $key_check_isChange = $keyCheckArray[1];
 
         // 获取我的常用联系人列表
         $getPassengerListQuery = [
@@ -159,14 +225,12 @@ class HomeController extends Controller
         ];
         $getPassengerListUrl = "https://kyfw.12306.cn/otn/confirmPassenger/getPassengerDTOs";
         $passengerList = $this->postData($getPassengerListUrl, $getPassengerListQuery);
+        echo $getPassengerListUrl;
+        echo "<br><br>";
+        var_export($getPassengerListQuery);
         echo "<br><br>";
         var_export($passengerList);
         echo "<br><br>";
-
-        // 获取乘客买票验证码
-        $imageUrl = "https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=passenger&rand=randp&0.757505074609071";
-        $savePath = "storage/framework/cache/image.jpg";
-        $imagePath = $this->getPicAndSave($imageUrl, $savePath);
 
         // 购票人确定
         // passengerTicketStr组成的格式：seatType,0,票类型（成人票填1）,乘客名,passenger_id_type_code,passenger_id_no,mobile_no,’N’
@@ -184,22 +248,108 @@ class HomeController extends Controller
             '_json_att' => '',
             'REPEAT_SUBMIT_TOKEN' => $theToken
         ];
+        echo $confirmPassengerUrl;
+        echo "<br><br>";
+        var_export($confirmPassengerQuery);
+        echo "<br><br>";
         $confirmPassengerData = $this->postData($confirmPassengerUrl, $confirmPassengerQuery);
         echo "<br><br>";
         var_export($confirmPassengerData);
         echo "<br><br>";
         // 如果申请成功，往下走，失败的话，重新登录
         if ( isset($confirmPassengerData['status']) && $confirmPassengerData['status']==true && isset($confirmPassengerData['data']['submitStatus']) && $confirmPassengerData['data']['submitStatus']==true ) {
-            // 获取是否要提交验证码的判断
+            // todo,如果要提交验证码则加上验证码接口，获取是否要提交验证码的判断
             $ifShowPassCode = $confirmPassengerData['data']['ifShowPassCode'];
 
-            // 准备进入排队
+            // 查看排队人数
             $queueCountUrl = "https://kyfw.12306.cn/otn/confirmPassenger/getQueueCount";
             $queueCountQuery = [
+                'train_date' => gmdate("D M d Y 00:00:00", strtotime($dateTime)) . " GMT+0800 (CST)",
+                'train_no' => $trains[0]['trainNo'],
+                'stationTrainCode' => $trains[0]['train'],
+                'seatType' => '1',
+                'fromStationTelecode' => $from,
+                'toStationTelecode' => $to,
+                'leftTicket' => $trains[0]['leftTicket'],
+                'purpose_codes' => '00',
+                'train_location' => $trains[0]['train_location'],
+                '_json_att' => '',
+                'REPEAT_SUBMIT_TOKEN' => $theToken
             ];
-        } else {
+            $queueCountData = $this->postData($queueCountUrl, $queueCountQuery);
+            echo $queueCountUrl;
             echo "<br><br>";
-            var_export($preAddOrderData);
+            var_export($queueCountQuery);
+            echo "<br><br>";
+            var_export($queueCountData);
+            echo "<br><br>";
+            if ( isset($queueCountData['status']) && $queueCountData['status']==true ) {
+                // 确认订单 
+                $confirmOrderUrl = "https://kyfw.12306.cn/otn/confirmPassenger/confirmSingleForQueue";
+                $confirmOrderQuery = [
+                    'passengerTicketStr' => '1,0,1,朱雁宗,1,440981199209200231,13672476388,N_1,0,1,程恒,1,440981199201181128,13672476388,N',
+                    'oldPassengerStr' => '朱雁宗,1,440981199209200231,1_程恒,1,440981199201181128,1_',
+                    'randCode' => '',
+                    'purpose_codes' => '00',
+                    'key_check_isChange' => $key_check_isChange,
+                    'leftTicketStr' => $trains[0]['leftTicket'],
+                    'train_location' => $trains[0]['train_location'],
+                    'choose_seats' => '',
+                    //'choose_seats' => $confirmPassengerData['data']['choose_Seats'],
+                    'seatDetailType' => '000',
+                    'roomType' => '00',
+                    'dwAll' => 'N',
+                    '_json_att' => '',
+                    'REPEAT_SUBMIT_TOKEN' => $theToken
+                ];
+                $confirmOrderData = $this->postData($confirmOrderUrl, $confirmOrderQuery);
+                if ( isset($confirmOrderData['status']) && $confirmOrderData['status']==true && isset($confirmOrderData['data']['submitStatus']) && $confirmOrderData['data']['submitStatus']==true ) {
+                    $orderId = '';
+                    while( empty($orderId) ) {
+                        $getAddOrderWaitTimeUrl = "https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime?random=" . time() . 
+                            "&tourFlag=dc&_json_att=&REPEAT_SUBMIT_TOKEN=" . $theToken;
+                        $getAddOrderWaitTimeData = $this->getData($getAddOrderWaitTimeUrl);
+                        if ( empty($getAddOrderWaitTimeData['data']['orderId']) ) {
+                            echo "sleep 2s";
+                            sleep(2);
+                            $orderId = '';
+                            echo "<br><br>";
+                            var_export("fail");
+                            echo "<br><br>";
+                            var_export($getAddOrderWaitTimeData);
+                            echo "<br><br>";
+                        } else {
+                            $orderId = $getAddOrderWaitTimeData['data']['orderId'];
+                        }
+                    }
+                    exit("success " . $orderId);
+                } else {
+                    // todo 重新登录
+                    //return redirect("index");
+                    echo $confirmOrderUrl;
+                    echo "<br><br>";
+                    var_export($confirmOrderQuery);
+                    echo "<br><br>";
+                    var_export($confirmOrderData);
+                    echo "<br><br>";
+                    exit();
+                }
+            } else {
+                // todo 重新登录
+                //return redirect("index");
+                echo $queueCountUrl;
+                echo "<br><br>";
+                var_export($queueCountQuery);
+                echo "<br><br>";
+                var_export($queueCountData);
+                echo "<br><br>";
+                exit();
+            }
+        } else {
+            // todo 重新登录
+            //return redirect("index");
+            echo "<br><br>";
+            var_export($confirmPassengerData);
             echo "<br><br>";
             exit;
         }
