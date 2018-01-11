@@ -11,9 +11,8 @@ class HomeController extends Controller
     //CONST COOKIE_SUCCESS = "/tmp/tickets.tmp";
 
     /**
-        * 验证码输入页面
+        * 登录验证码输入页面
         *
-        * @return 
      */
     public function index()
     {
@@ -27,14 +26,12 @@ class HomeController extends Controller
     }
 
     /**
-        * 登录
+        * 登录请求
         *
-        * @return 
      */
     public function login()
     {
         $verify = rtrim($_POST["randCode"],',');
-        $comeFrom = rtrim($_POST["comeFrom"],'login');
         if ( empty($verify) ) {
             echo "\n\n";
             var_export("数据为空,请重新请求");
@@ -85,71 +82,25 @@ class HomeController extends Controller
     }
 
     /**
-        * 添加订单
+        * 直接下单接口
         *
-        * @return array
      */
-    public function addOrder()
-    {
-        //$dateTime = "2017-11-24";
-        //$from = "GZQ";
-        //$to = "MDQ";
-        //$trainListUrl = "https://kyfw.12306.cn/otn/leftTicket/query?leftTicketDTO.train_date=" . $dateTime . 
-            //"&leftTicketDTO.from_station=" . $from . "&leftTicketDTO.to_station=" . $to . "&purpose_codes=ADULT";
-        //$trainList = $this->getData($trainListUrl);
-        //$trains = [];
-        //if ( isset($trainList['status']) && $trainList['status']==true  && isset($trainList['data']['result']) && !empty($trainList['data']['result'])) {
-            //$trainArray = $trainList['data']['result'];
-            //foreach ($trainArray as $key => $train) {
-                //$trainData = explode("|", $train);
-                //$trains[] = [
-                    //'train' => $trainData[3],
-                    //'num' => $trainData[29]
-                //];
-            //}
-        //}
-        //echo "\n\n";
-        //var_export($trains);
-        //echo "\n\n";
-        //exit;
-
-        // 检验用户信息https://kyfw.12306.cn/otn/login/checkUser post  _json_att=''
-        $checkUserData = [
-            '_json_att' => ''
-        ];
-        $checkUserUrl = "https://kyfw.12306.cn/otn/login/checkUser";
-        $checkUserReturnData = $this->getData($checkUserUrl);
-        if ( isset($checkUserReturnData['status']) && $checkUserReturnData['status']==true  && isset($checkUserReturnData['data']['flag']) && $checkUserReturnData['data']['flag']==true ) {
-            // 验证用户是登录状态的
-            echo "\n\n";
-            var_export($checkUserReturnData);
-            echo "\n\n";
-            exit;
-        } else {
-            // 没有登录,回到登录界面，带上来源
-            return redirect('index')->with('comeFrom', 'addOrder');
-        }
-        // 下单https://kyfw.12306.cn/otn/confirmPassenger/checkOrderInfo post cancel_flag=2&bed_level_order_num=000000000000000000000000000000&passengerTicketStr=3%2C0%2C1%2C%E6%9C%B1%E9%9B%81%E5%AE%97%2C1%2C440981199209200231%2C13672476388%2CN_3%2C0%2C1%2C%E7%A8%8B%E6%81%92%2C1%2C440981199201181128%2C13672476388%2CN&oldPassengerStr=%E6%9C%B1%E9%9B%81%E5%AE%97%2C1%2C440981199209200231%2C1_%E7%A8%8B%E6%81%92%2C1%2C440981199201181128%2C1_&tour_flag=dc&randCode=&_json_att=&REPEAT_SUBMIT_TOKEN=2f6eab128238a7894ffd46a72c88a35a
-        // 确认下单https://kyfw.12306.cn/otn/confirmPassenger/confirmSingle post passengerTicketStr=1%2C0%2C1%2C%E6%9C%B1%E9%9B%81%E5%AE%97%2C1%2C440981199209200231%2C13672476388%2CN_1%2C0%2C1%2C%E7%A8%8B%E6%81%92%2C1%2C440981199201181128%2C13672476388%2CN&oldPassengerStr=%E6%9C%B1%E9%9B%81%E5%AE%97%2C1%2C440981199209200231%2C1_%E7%A8%8B%E6%81%92%2C1%2C440981199201181128%2C1_&tour_flag=dc&randCode=&purpose_codes=00&key_check_isChange=AF4B4DEA6896FE1954876A604903A980D801DA67BA66C24AAB4CD22A&train_location=T3&choose_seats=&seatDetailType=000&roomType=00&dwAll=N&_json_att=&REPEAT_SUBMIT_TOKEN=188553c54279963dda120f800582616f
-    }
-
     public function addOrderNow()
     {
         // 校验用户登录，获取新的key
         $checkLoginData = $this->postData("https://kyfw.12306.cn/passport/web/auth/uamtk", ['appid'=>'otn']);
         // 验证这个客户端可以登录
         $checkClient = $this->postData("https://kyfw.12306.cn/otn/uamauthclient", ['_json_att'=>'', 'tk'=>$checkLoginData['newapptk']]);
-        // 检验用户信息https://kyfw.12306.cn/otn/login/checkUser post  _json_att=''
+        // 检验用户信息
         $checkUserData = [
             '_json_att' => ''
         ];
         $checkUserUrl = "https://kyfw.12306.cn/otn/login/checkUser";
         $checkUserReturnData = $this->getData($checkUserUrl);
-        echo "<br><br>";
-        echo $checkUserUrl;
-        echo "<br><br>";
-        var_export($checkUserReturnData);
-        echo "<br><br>";
+        // 如果用户不是登录状态，则返回登录页面
+        if ( !isset($checkUserReturnData['data']['flag']) || $checkUserReturnData['data']['flag']!=true ) {
+            return redirect('index');
+        }
 
         // 查看火车余票
         $dateTime = "2017-11-29";
@@ -354,6 +305,49 @@ class HomeController extends Controller
             exit;
         }
         exit;
+    }
+
+    /**
+        * 买票验证码输入页面
+        *
+     */
+    public function addOrderCheck()
+    {
+        // 打开主页获取cookie
+        $savePath = "storage/framework/cache/image.jpg";
+        return view('addOrderCheck')->with('imgUrl', $imagePath);
+    }
+
+    /**
+        * 处理验证码请求并直接下单
+     */
+    public function checkOrderCodeAndAddOrder()
+    {
+        $verify = rtrim($_POST["randCode"],',');
+        $theToken = $_POST["theToken"];
+        // 验证码为空，重新来过
+        if ( empty($verify) || empty($theToken) ) {
+            // 返回下单页面
+            return redirect('addOrderNow');
+        }
+
+        // 校验验证码
+        $checkChaData = [
+            'login_site' =>'E',
+            'answer' => $verify,
+            'rand' => 'sjrand',
+            '_json_att' => '',
+            'REPEAT_SUBMIT_TOKEN' => $theToken
+        ];
+        $checkChaUrl = "https://kyfw.12306.cn/passport/captcha/captcha-check";
+        $captchaResult = $this->postData($checkChaUrl, $checkChaData);
+        // 验证码验证成功
+        if ( isset($captchaResult['result_code']) && $captchaResult['result_code']==4 ) {
+            // 直接下单
+        } else {
+            // 返回下单页面
+            return redirect('addOrderNow');
+        }
     }
 
     /**
