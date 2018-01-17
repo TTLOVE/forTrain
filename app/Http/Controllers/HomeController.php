@@ -8,7 +8,7 @@ class HomeController extends Controller
 {
     CONST COOKIE_VERIFY = "/tmp/verify.tmp";
     CONST COOKIE_SUCCESS = "/tmp/verify.tmp";
-    CONST THE_DATE = "2018-01-28";
+    CONST THE_DATE = "2018-02-12";
     CONST THE_TRAIN_ARRAY = [
         'K587',
         'K837',
@@ -401,18 +401,18 @@ class HomeController extends Controller
                 $trainData = explode("|", $train);
                 $ticketKey = $trainData[29];
                 if ( $ticketKey=="有" || $ticketKey>2 ) {
-                    //if ( empty(self::THE_TRAIN_ARRAY) || (!empty(self::THE_TRAIN_ARRAY) &&  in_array($trainData[3], self::THE_TRAIN_ARRAY)) ) {
-                    $trains[] = [
-                        'train' => $trainData[3],
-                        'num' => $trainData[29],
-                        'carStr' => urldecode($trainData[0]),
-                        'trainNo' => $trainData[2],
-                        'leftTicket' => $trainData[12],
-                        'train_location' => $trainData[15],
-                        'begin' => $trainData[8],
-                        'end' => $trainData[9],
-                    ];
-                    //}
+                    if ( empty(self::THE_TRAIN_ARRAY) || (!empty(self::THE_TRAIN_ARRAY) &&  in_array($trainData[3], self::THE_TRAIN_ARRAY)) ) {
+                        $trains[] = [
+                            'train' => $trainData[3],
+                            'num' => $trainData[29],
+                            'carStr' => urldecode($trainData[0]),
+                            'trainNo' => $trainData[2],
+                            'leftTicket' => $trainData[12],
+                            'train_location' => $trainData[15],
+                            'begin' => $trainData[8],
+                            'end' => $trainData[9],
+                        ];
+                    }
                 }
             }
         }
