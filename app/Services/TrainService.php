@@ -10,13 +10,14 @@ class TrainService
 {
     CONST COOKIE_VERIFY = "/tmp/verify.tmp";
     CONST COOKIE_SUCCESS = "/tmp/verify.tmp";
-    CONST THE_TRAIN_ARRAY = [
-        'K587',
-        'K837',
-        'K4224',
-        'K9045',
-        'K9049',
-    ];
+    //CONST THE_TRAIN_ARRAY = [
+        //'K587',
+        //'K837',
+        //'K4224',
+        //'K9045',
+        //'K9049',
+    //];
+    CONST THE_TRAIN_ARRAY = [];
     private $theDate = "";
 
     public function __construct($date='')
