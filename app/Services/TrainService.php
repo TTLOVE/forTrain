@@ -171,7 +171,7 @@ class TrainService
     public function checkChaReportError($id)
     {
         $DaMaService = new DaMaService('TT_LOVE', 'zyz6661726');
-        $DaMaService->reportError();
+        $DaMaService->reportError($id);
     }
 
     /**
@@ -411,7 +411,7 @@ class TrainService
             $preAddOrderUrl = "https://kyfw.12306.cn/otn/leftTicket/submitOrderRequest";
             $preAddOrderQuery = [
                 'secretStr' => $train['carStr'],
-                'train_date' => $dateTime,
+                'train_date' => $this->theDate,
                 'back_train_date' => $this->theDate,
                 'tour_flag' => 'dc',
                 'purpose_codes' => 'ADULT',

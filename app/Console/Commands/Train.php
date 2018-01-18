@@ -88,7 +88,7 @@ class Train extends Command
             }
         }
         $this->info('有并发送邮件通知');
-        //$TrainService->sendEmail("有票通知");
+        $TrainService->sendEmail("有票通知");
         $this->step2($TrainService);
     }
 
@@ -206,6 +206,7 @@ class Train extends Command
             $this->step1($TrainService);
             return false;
         }
+        $TrainService->sendEmail("请尽快支付");
         $this->info('添加订单成功,结束');
     }
 }
