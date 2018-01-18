@@ -398,6 +398,8 @@ class TrainService
         echo "\n";
         var_export("预提交订单");
         echo "\n";
+        $from = "GZQ";
+        $to = "MDQ";
         // 循环选择特定的车次
         foreach ($trains as $train) {
             echo "\n";
