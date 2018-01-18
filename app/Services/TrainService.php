@@ -543,7 +543,7 @@ class TrainService
             // 查看排队人数
             $queueCountUrl = "https://kyfw.12306.cn/otn/confirmPassenger/getQueueCount";
             $queueCountQuery = [
-                'train_date' => gmdate("D M d Y 00:00:00", strtotime($dateTime)) . " GMT+0800 (CST)",
+                'train_date' => gmdate("D M d Y 00:00:00", strtotime($this->theDate)) . " GMT+0800 (CST)",
                     'train_no' => $train['trainNo'],
                     'stationTrainCode' => $train['train'],
                     'seatType' => '1',
