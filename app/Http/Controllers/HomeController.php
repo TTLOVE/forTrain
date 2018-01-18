@@ -16,11 +16,6 @@ class HomeController extends Controller
         'K9045',
     ];
 
-    public function __construct()
-    {
-        set_time_limit(0);
-    }
-
     /**
      * 获取用户信息
      *
@@ -28,6 +23,7 @@ class HomeController extends Controller
      */
     public function searchTrainList()
     {
+        set_time_limit(0);
         $setFlag = true;
         $times = 0;
         while ($setFlag && $times<1000) {
@@ -88,8 +84,7 @@ class HomeController extends Controller
             }
             usleep(30000);
         }
-        usleep(500000);
-        return redirect('index');
+        return true;
     }
 
     /**

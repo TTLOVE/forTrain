@@ -437,9 +437,9 @@ class TrainService
             preg_match("/'key_check_isChange':'(.*?)'/", $initData, $keyCheckArray);
             $theToken = $theTokenArray[1];
             $key_check_isChange = $keyCheckArray[1];
-            $times = 0;
+            $times = 1;
             // 如果校验失败，重试
-            while ($times<3 && (empty($theToken) || empty($key_check_isChange))) {
+            while ($times<=3 && (empty($theToken) || empty($key_check_isChange))) {
                 var_export("校验失败，第" . $times . "次");
                 echo "\n";
                 var_export("休息50毫秒");
@@ -453,14 +453,17 @@ class TrainService
                 $times++;
             }
             // 如果都失败的话重新回到校验验证码页面
-            if ( $times>=3 && (empty($theToken) || empty($key_check_isChange))) {
+            if ( $times>3 && (empty($theToken) || empty($key_check_isChange))) {
+                $returnData = [
+                    'status' => 0,
+                    'msg' => '获取token信息失败'
+                ];
+                return $returnData;
             }
 
-
-            echo "<br>";
+            echo "\n";
             var_export("获取我的常用联系人列表");
-            echo "<br>";
-            flush();
+            echo "\n";
             // 获取我的常用联系人列表
             $getPassengerListQuery = [
                 '_json_att' => '',
@@ -468,18 +471,15 @@ class TrainService
             ];
             $getPassengerListUrl = "https://kyfw.12306.cn/otn/confirmPassenger/getPassengerDTOs";
             $passengerList = $this->postData($getPassengerListUrl, $getPassengerListQuery);
-            echo "<br>";
+            echo "\n";
             var_export("获取我的常用联系人列表返回数据");
-            echo "<br>";
+            echo "\n";
             var_export($passengerList);
-            echo "<br>";
-            flush();
+            echo "\n";
 
-
-            echo "<br>";
+            echo "\n";
             var_export("购票人确定");
-            echo "<br>";
-            flush();
+            echo "\n";
             // 购票人确定
             // passengerTicketStr组成的格式：seatType,0,票类型（成人票填1）,乘客名,passenger_id_type_code,passenger_id_no,mobile_no,’N’
             // 座位编号（seatType）参考：‘硬卧’ => ‘3’,‘软卧’ => ‘4’,‘二等座’ => ‘O’,‘一等座’ => ‘M’,‘硬座’ => ‘1’,多个乘车人用’_’隔开
@@ -497,56 +497,49 @@ class TrainService
                 'REPEAT_SUBMIT_TOKEN' => $theToken
             ];
             $confirmPassengerData = $this->postData($confirmPassengerUrl, $confirmPassengerQuery);
-            $times = 0;
+            $times = 1;
             // 如果校验失败，重试
-            while ($times<3 && 
+            while ($times<=5 && 
                 (!isset($confirmPassengerData['data']['submitStatus']) || (isset($confirmPassengerData['data']['submitStatus']) && $confirmPassengerData['data']['submitStatus']!=true))) {
                     var_export("校验失败，第" . $times . "次");
-                    echo "<br>";
+                    echo "\n";
                     var_export($confirmPassengerData);
-                    echo "<br>";
+                    echo "\n";
                     var_export("休息50毫秒");
-                    echo "<br>";
-                    flush();
+                    echo "\n";
                     usleep(50000);
                     $confirmPassengerData = $this->postData($confirmPassengerUrl, $confirmPassengerQuery);
                     $times++;
                 }
             // 如果都失败的话重新回到校验验证码页面
-            if ( $times>=3 && 
+            if ( $times>5 && 
                 (!isset($confirmPassengerData['data']['submitStatus']) || (isset($confirmPassengerData['data']['submitStatus']) && $confirmPassengerData['data']['submitStatus']!=true))) {
-                    var_export("校验失败，第" . $times . "次,返回重新登录");
-                    echo "<br>";
-                    var_export($confirmPassengerData);
-                    echo "<br>";
-                    flush();
-                    usleep(500000);
-                    return redirect('index');
+                    $returnData = [
+                        'status' => 0,
+                        'msg' => '购票人确定失败'
+                    ];
+                    return $returnData;
                 }
-            echo "<br>";
+            echo "\n";
             var_export("购票人确定成功，返回数据");
-            echo "<br>";
+            echo "\n";
             var_export($confirmPassengerData);
-            echo "<br>";
-            flush();
-
+            echo "\n";
 
             // 申请成功，往下走
             $ifShowPassCode = $confirmPassengerData['data']['ifShowPassCode'];
             // 如果需要显示验证码提交,退出循环，跳去提交验证码
             if ( $ifShowPassCode!='N' ) {
-                echo "<br>";
+                echo "\n";
                 var_export("下单需要输入验证码");
-                echo "<br>";
-                flush();
-                return redirect('addOrderCheck');
+                echo "\n";
+                exit('退出');
             }
 
 
-            echo "<br>";
+            echo "\n";
             var_export("申请成功，往下走,查看排队人数");
-            echo "<br>";
-            flush();
+            echo "\n";
             // 查看排队人数
             $queueCountUrl = "https://kyfw.12306.cn/otn/confirmPassenger/getQueueCount";
             $queueCountQuery = [
@@ -563,44 +556,38 @@ class TrainService
                     'REPEAT_SUBMIT_TOKEN' => $theToken
                 ];
             $queueCountData = $this->postData($queueCountUrl, $queueCountQuery);
-            $times = 0;
+            $times = 1;
             // 如果校验失败，重试
-            while ($times<3 && 
+            while ($times<=5 && 
                 (!isset($queueCountData['status']) || (isset($queueCountData['status']) && $queueCountData['status']==true))) {
                     var_export("校验失败，第" . $times . "次");
-                    echo "<br>";
+                    echo "\n";
                     var_export($queueCountData);
-                    echo "<br>";
+                    echo "\n";
                     var_export("休息50毫秒");
-                    echo "<br>";
-                    flush();
+                    echo "\n";
                     usleep(50000);
                     $queueCountData = $this->postData($queueCountUrl, $queueCountQuery);
                     $times++;
                 }
             // 如果都失败的话重新回到校验验证码页面
-            if ( $times>=3 && 
+            if ( $times>5 && 
                 (!isset($queueCountData['status']) || (isset($queueCountData['status']) && $queueCountData['status']==true))) {
-                    var_export("校验失败，第" . $times . "次,返回重新登录");
-                    echo "<br>";
-                    var_export($queueCountData);
-                    echo "<br>";
-                    flush();
-                    usleep(500000);
-                    return redirect('index');
+                    $returnData = [
+                        'status' => 0,
+                        'msg' => '查看排队人数失败'
+                    ];
+                    return $returnData;
                 }
-            echo "<br>";
+            echo "\n";
             var_export("查看排队人数返回数据");
-            echo "<br>";
+            echo "\n";
             var_export($queueCountData);
-            echo "<br>";
-            flush();
+            echo "\n";
 
-
-            echo "<br>";
+            echo "\n";
             var_export("确认订单");
-            echo "<br>";
-            flush();
+            echo "\n";
             // 确认订单 
             $confirmOrderUrl = "https://kyfw.12306.cn/otn/confirmPassenger/confirmSingleForQueue";
             $confirmOrderQuery = [
@@ -620,356 +607,64 @@ class TrainService
                 'REPEAT_SUBMIT_TOKEN' => $theToken
             ];
             $confirmOrderData = $this->postData($confirmOrderUrl, $confirmOrderQuery);
-            $times = 0;
+            $times = 1;
             // 如果校验失败，重试
-            while ($times<3 && 
+            while ($times<=5 && 
                 (!isset($confirmOrderData['data']['submitStatus']) || (isset($confirmOrderData['data']['submitStatus']) && $confirmOrderData['data']['submitStatus']==true))) {
                     var_export("校验失败，第" . $times . "次");
-                    echo "<br>";
+                    echo "\n";
                     var_export($confirmOrderData);
-                    echo "<br>";
+                    echo "\n";
                     var_export("休息50毫秒");
-                    echo "<br>";
-                    flush();
+                    echo "\n";
                     usleep(50000);
                     $confirmOrderData = $this->postData($confirmOrderUrl, $confirmOrderQuery);
                     $times++;
                 }
             // 如果都失败的话重新回到校验验证码页面
-            if ( $times>=3 && 
+            if ( $times>5 && 
                 (!isset($confirmOrderData['data']['submitStatus']) || (isset($confirmOrderData['data']['submitStatus']) && $confirmOrderData['data']['submitStatus']==true))) {
-                    var_export("校验失败，第" . $times . "次,返回重新登录");
-                    echo "<br>";
-                    var_export($confirmOrderData);
-                    echo "<br>";
-                    flush();
-                    usleep(500000);
-                    return redirect('index');
+                    $returnData = [
+                        'status' => 0,
+                        'msg' => '确认订单失败'
+                    ];
+                    return $returnData;
                 }
-            echo "<br>";
+            echo "\n";
             var_export("确认订单返回数据");
-            echo "<br>";
+            echo "\n";
             var_export($confirmOrderData);
-            echo "<br>";
-            flush();
+            echo "\n";
 
             $orderId = '';
-            while( empty($orderId) ) {
+            $times = 1;
+            while( empty($orderId) && $times<100 ) {
                 $getAddOrderWaitTimeUrl = "https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime?random=" . time() . 
                     "&tourFlag=dc&_json_att=&REPEAT_SUBMIT_TOKEN=" . $theToken;
                 $getAddOrderWaitTimeData = $this->getData($getAddOrderWaitTimeUrl);
                 if ( empty($getAddOrderWaitTimeData['data']['orderId']) ) {
-                    echo "<br>";
+                    echo "\n";
                     var_export("失败,休息50毫秒");
-                    echo "<br>";
+                    echo "\n";
                     var_export($getAddOrderWaitTimeData);
-                    echo "<br>";
-                    flush();
+                    echo "\n";
                     usleep(50000);
                 } else {
                     $orderId = $getAddOrderWaitTimeData['data']['orderId'];
                     break;
                 }
-            }
-            exit("成功！订单id: " . $orderId);
-        }
-    }
-
-    /**
-     * 直接下单接口
-     *
-     */
-    public function addOrderNow()
-    {
-        echo "<br>";
-        var_export("预提交订单");
-        echo "<br>";
-        flush();
-        // 循环选择特定的车次
-        foreach ($trains as $train) {
-            echo "<br>";
-            var_export("获取乘客买票验证码");
-            echo "<br>";
-            flush();
-            // 获取乘客买票验证码
-            $imageUrl = "https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=passenger&rand=randp&0.757505074609071";
-            $savePath = "storage/framework/cache/image.jpg";
-            $imagePath = $this->getPicAndSave($imageUrl, $savePath);
-            // 预提交订单
-            $preAddOrderUrl = "https://kyfw.12306.cn/otn/leftTicket/submitOrderRequest";
-            $preAddOrderQuery = [
-                'secretStr' => $train['carStr'],
-                'train_date' => $dateTime,
-                'back_train_date' => $this->theDate,
-                'tour_flag' => 'dc',
-                'purpose_codes' => 'ADULT',
-                'query_from_station_name' => '广州',
-                'query_to_station_name' => '茂名',
-                'undefined' => ''
-            ];
-            $preAddOrderData = $this->postData($preAddOrderUrl, $preAddOrderQuery);
-            echo "<br>";
-            var_export("预提交订单返回数据");
-            echo "<br>";
-            var_export($preAddOrderData);
-            echo "<br>";
-            flush();
-
-            echo "<br>";
-            var_export("初始化页面,获取token");
-            echo "<br>";
-            flush();
-            // 初始化页面,获取token
-            $initUrl = "https://kyfw.12306.cn/otn/confirmPassenger/initDc";
-            $initQuery = ['_json_att'=>''];
-            $initData = $this->postData($initUrl, $initQuery);
-            preg_match("/var globalRepeatSubmitToken = '(.*?)';/", $initData, $theTokenArray);
-            preg_match("/'key_check_isChange':'(.*?)'/", $initData, $keyCheckArray);
-            $theToken = $theTokenArray[1];
-            $key_check_isChange = $keyCheckArray[1];
-            $times = 0;
-            // 如果校验失败，重试
-            while ($times<3 && (empty($theToken) || empty($key_check_isChange))) {
-                var_export("校验失败，第" . $times . "次");
-                echo "<br>";
-                var_export("休息50毫秒");
-                echo "<br>";
-                flush();
-                usleep(50000);
-                $initData = $this->postData($initUrl, $initQuery);
-                preg_match("/var globalRepeatSubmitToken = '(.*?)';/", $initData, $theTokenArray);
-                preg_match("/'key_check_isChange':'(.*?)'/", $initData, $keyCheckArray);
-                $theToken = $theTokenArray[1];
-                $key_check_isChange = $keyCheckArray[1];
                 $times++;
             }
-            // 如果都失败的话重新回到校验验证码页面
-            if ( $times>=3 && (empty($theToken) || empty($key_check_isChange))) {
-                var_export("校验失败，第" . $times . "次,返回重新登录");
-                echo "<br>";
-                flush();
-                usleep(500000);
-                return redirect('index');
-            }
-
-
-            echo "<br>";
-            var_export("获取我的常用联系人列表");
-            echo "<br>";
-            flush();
-            // 获取我的常用联系人列表
-            $getPassengerListQuery = [
-                '_json_att' => '',
-                'REPEAT_SUBMIT_TOKEN' => $theToken
-            ];
-            $getPassengerListUrl = "https://kyfw.12306.cn/otn/confirmPassenger/getPassengerDTOs";
-            $passengerList = $this->postData($getPassengerListUrl, $getPassengerListQuery);
-            echo "<br>";
-            var_export("获取我的常用联系人列表返回数据");
-            echo "<br>";
-            var_export($passengerList);
-            echo "<br>";
-            flush();
-
-
-            echo "<br>";
-            var_export("购票人确定");
-            echo "<br>";
-            flush();
-            // 购票人确定
-            // passengerTicketStr组成的格式：seatType,0,票类型（成人票填1）,乘客名,passenger_id_type_code,passenger_id_no,mobile_no,’N’
-            // 座位编号（seatType）参考：‘硬卧’ => ‘3’,‘软卧’ => ‘4’,‘二等座’ => ‘O’,‘一等座’ => ‘M’,‘硬座’ => ‘1’,多个乘车人用’_’隔开
-            // oldPassengerStr组成的格式：乘客名,passenger_id_type_code,passenger_id_no,passenger_type，’_’
-            // 多个乘车人用’_’隔开，注意最后的需要多加一个’_’。
-            $confirmPassengerUrl = "https://kyfw.12306.cn/otn/confirmPassenger/checkOrderInfo";
-            $confirmPassengerQuery = [
-                'cancel_flag' => '2',
-                'bed_level_order_num' => '000000000000000000000000000000',
-                'passengerTicketStr' => '1,0,1,朱雁宗,1,440981199209200231,13672476388,N_1,0,1,程恒,1,440981199201181128,13672476388,N_1,0,1,程剑豪,1,440981199506131156,13672476388,N',
-                'oldPassengerStr' => '朱雁宗,1,440981199209200231,1_程恒,1,440981199201181128,1_程剑豪,1,440981199506131156,1_',
-                'tour_flag' => 'dc',
-                'randCode' => '',
-                '_json_att' => '',
-                'REPEAT_SUBMIT_TOKEN' => $theToken
-            ];
-            $confirmPassengerData = $this->postData($confirmPassengerUrl, $confirmPassengerQuery);
-            $times = 0;
-            // 如果校验失败，重试
-            while ($times<3 && 
-                (!isset($confirmPassengerData['data']['submitStatus']) || (isset($confirmPassengerData['data']['submitStatus']) && $confirmPassengerData['data']['submitStatus']!=true))) {
-                    var_export("校验失败，第" . $times . "次");
-                    echo "<br>";
-                    var_export($confirmPassengerData);
-                    echo "<br>";
-                    var_export("休息50毫秒");
-                    echo "<br>";
-                    flush();
-                    usleep(50000);
-                    $confirmPassengerData = $this->postData($confirmPassengerUrl, $confirmPassengerQuery);
-                    $times++;
-                }
-            // 如果都失败的话重新回到校验验证码页面
-            if ( $times>=3 && 
-                (!isset($confirmPassengerData['data']['submitStatus']) || (isset($confirmPassengerData['data']['submitStatus']) && $confirmPassengerData['data']['submitStatus']!=true))) {
-                    var_export("校验失败，第" . $times . "次,返回重新登录");
-                    echo "<br>";
-                    var_export($confirmPassengerData);
-                    echo "<br>";
-                    flush();
-                    usleep(500000);
-                    return redirect('index');
-                }
-            echo "<br>";
-            var_export("购票人确定成功，返回数据");
-            echo "<br>";
-            var_export($confirmPassengerData);
-            echo "<br>";
-            flush();
-
-
-            // 申请成功，往下走
-            $ifShowPassCode = $confirmPassengerData['data']['ifShowPassCode'];
-            // 如果需要显示验证码提交,退出循环，跳去提交验证码
-            if ( $ifShowPassCode!='N' ) {
-                echo "<br>";
-                var_export("下单需要输入验证码");
-                echo "<br>";
-                flush();
-                return redirect('addOrderCheck');
-            }
-
-
-            echo "<br>";
-            var_export("申请成功，往下走,查看排队人数");
-            echo "<br>";
-            flush();
-            // 查看排队人数
-            $queueCountUrl = "https://kyfw.12306.cn/otn/confirmPassenger/getQueueCount";
-            $queueCountQuery = [
-                'train_date' => gmdate("D M d Y 00:00:00", strtotime($dateTime)) . " GMT+0800 (CST)",
-                    'train_no' => $train['trainNo'],
-                    'stationTrainCode' => $train['train'],
-                    'seatType' => '1',
-                    'fromStationTelecode' => $from,
-                    'toStationTelecode' => $to,
-                    'leftTicket' => $train['leftTicket'],
-                    'purpose_codes' => '00',
-                    'train_location' => $train['train_location'],
-                    '_json_att' => '',
-                    'REPEAT_SUBMIT_TOKEN' => $theToken
+            if ( empty($orderId) ) {
+                continue;
+            } else {
+                $returnData = [
+                    'status' => 1,
+                    'msg' => '下单成功，订单id:' . $orderId
                 ];
-            $queueCountData = $this->postData($queueCountUrl, $queueCountQuery);
-            $times = 0;
-            // 如果校验失败，重试
-            while ($times<3 && 
-                (!isset($queueCountData['status']) || (isset($queueCountData['status']) && $queueCountData['status']==true))) {
-                    var_export("校验失败，第" . $times . "次");
-                    echo "<br>";
-                    var_export($queueCountData);
-                    echo "<br>";
-                    var_export("休息50毫秒");
-                    echo "<br>";
-                    flush();
-                    usleep(50000);
-                    $queueCountData = $this->postData($queueCountUrl, $queueCountQuery);
-                    $times++;
-                }
-            // 如果都失败的话重新回到校验验证码页面
-            if ( $times>=3 && 
-                (!isset($queueCountData['status']) || (isset($queueCountData['status']) && $queueCountData['status']==true))) {
-                    var_export("校验失败，第" . $times . "次,返回重新登录");
-                    echo "<br>";
-                    var_export($queueCountData);
-                    echo "<br>";
-                    flush();
-                    usleep(500000);
-                    return redirect('index');
-                }
-            echo "<br>";
-            var_export("查看排队人数返回数据");
-            echo "<br>";
-            var_export($queueCountData);
-            echo "<br>";
-            flush();
-
-
-            echo "<br>";
-            var_export("确认订单");
-            echo "<br>";
-            flush();
-            // 确认订单 
-            $confirmOrderUrl = "https://kyfw.12306.cn/otn/confirmPassenger/confirmSingleForQueue";
-            $confirmOrderQuery = [
-                'passengerTicketStr' => '1,0,1,朱雁宗,1,440981199209200231,13672476388,N_1,0,1,程恒,1,440981199201181128,13672476388,N_1,0,1,程剑豪,1,440981199506131156,13672476388,N',
-                'oldPassengerStr' => '朱雁宗,1,440981199209200231,1_程恒,1,440981199201181128,1_程剑豪,1,440981199506131156,1_',
-                'randCode' => '',
-                'purpose_codes' => '00',
-                'key_check_isChange' => $key_check_isChange,
-                'leftTicketStr' => $train['leftTicket'],
-                'train_location' => $train['train_location'],
-                'choose_seats' => '',
-                //'choose_seats' => $confirmPassengerData['data']['choose_Seats'],
-                'seatDetailType' => '000',
-                'roomType' => '00',
-                'dwAll' => 'N',
-                '_json_att' => '',
-                'REPEAT_SUBMIT_TOKEN' => $theToken
-            ];
-            $confirmOrderData = $this->postData($confirmOrderUrl, $confirmOrderQuery);
-            $times = 0;
-            // 如果校验失败，重试
-            while ($times<3 && 
-                (!isset($confirmOrderData['data']['submitStatus']) || (isset($confirmOrderData['data']['submitStatus']) && $confirmOrderData['data']['submitStatus']==true))) {
-                    var_export("校验失败，第" . $times . "次");
-                    echo "<br>";
-                    var_export($confirmOrderData);
-                    echo "<br>";
-                    var_export("休息50毫秒");
-                    echo "<br>";
-                    flush();
-                    usleep(50000);
-                    $confirmOrderData = $this->postData($confirmOrderUrl, $confirmOrderQuery);
-                    $times++;
-                }
-            // 如果都失败的话重新回到校验验证码页面
-            if ( $times>=3 && 
-                (!isset($confirmOrderData['data']['submitStatus']) || (isset($confirmOrderData['data']['submitStatus']) && $confirmOrderData['data']['submitStatus']==true))) {
-                    var_export("校验失败，第" . $times . "次,返回重新登录");
-                    echo "<br>";
-                    var_export($confirmOrderData);
-                    echo "<br>";
-                    flush();
-                    usleep(500000);
-                    return redirect('index');
-                }
-            echo "<br>";
-            var_export("确认订单返回数据");
-            echo "<br>";
-            var_export($confirmOrderData);
-            echo "<br>";
-            flush();
-
-            $orderId = '';
-            while( empty($orderId) ) {
-                $getAddOrderWaitTimeUrl = "https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime?random=" . time() . 
-                    "&tourFlag=dc&_json_att=&REPEAT_SUBMIT_TOKEN=" . $theToken;
-                $getAddOrderWaitTimeData = $this->getData($getAddOrderWaitTimeUrl);
-                if ( empty($getAddOrderWaitTimeData['data']['orderId']) ) {
-                    echo "<br>";
-                    var_export("失败,休息50毫秒");
-                    echo "<br>";
-                    var_export($getAddOrderWaitTimeData);
-                    echo "<br>";
-                    flush();
-                    usleep(50000);
-                } else {
-                    $orderId = $getAddOrderWaitTimeData['data']['orderId'];
-                    break;
-                }
+                return $returnData;
             }
-            exit("成功！订单id: " . $orderId);
         }
-        exit;
     }
 
     /**
