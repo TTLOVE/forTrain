@@ -598,8 +598,6 @@ class TrainService
                 (!isset($confirmPassengerData['data']['submitStatus']) || (isset($confirmPassengerData['data']['submitStatus']) && $confirmPassengerData['data']['submitStatus']!=true))) {
                     var_export("校验失败，第" . $times . "次");
                     echo "\n";
-                    var_export($confirmPassengerData);
-                    echo "\n";
                     var_export("休息50毫秒");
                     echo "\n";
                     usleep(50000);
@@ -617,8 +615,6 @@ class TrainService
                 }
             echo "\n";
             var_export("购票人确定成功，返回数据");
-            echo "\n";
-            var_export($confirmPassengerData);
             echo "\n";
 
             echo "\n";
@@ -646,8 +642,6 @@ class TrainService
                 (!isset($queueCountData['status']) || (isset($queueCountData['status']) && $queueCountData['status']==true))) {
                     var_export("校验失败，第" . $times . "次");
                     echo "\n";
-                    var_export($queueCountData);
-                    echo "\n";
                     var_export("休息50毫秒");
                     echo "\n";
                     usleep(50000);
@@ -665,8 +659,6 @@ class TrainService
                 }
             echo "\n";
             var_export("查看排队人数返回数据");
-            echo "\n";
-            var_export($queueCountData);
             echo "\n";
 
             // 申请成功，往下走
@@ -712,8 +704,6 @@ class TrainService
                 (!isset($confirmOrderData['data']['submitStatus']) || (isset($confirmOrderData['data']['submitStatus']) && $confirmOrderData['data']['submitStatus']==true))) {
                     var_export("校验失败，第" . $times . "次");
                     echo "\n";
-                    var_export($confirmOrderData);
-                    echo "\n";
                     var_export("休息50毫秒");
                     echo "\n";
                     usleep(50000);
@@ -731,8 +721,6 @@ class TrainService
                 }
             echo "\n";
             var_export("确认订单返回数据");
-            echo "\n";
-            var_export($confirmOrderData);
             echo "\n";
 
             $orderId = '';
