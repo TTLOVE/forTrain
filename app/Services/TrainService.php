@@ -961,10 +961,10 @@ class TrainService
     {
         // 发送163邮件
         Mail::send('emails.msg',['data'=>$title],function($message){
-            $userName = $title;
+            $userName = "抢票用户";
             $message->from('yanzongnet@163.com', $userName);
             $to = 'yanzongnet@163.com';
-            $message->to($to)->subject($title);
+            $message->to($to)->subject("订票通知");
         });
         return true;
     }
