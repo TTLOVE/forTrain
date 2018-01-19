@@ -72,7 +72,7 @@ class Train extends Command
                 $this->table($headers, $data);
             } else {
                 if ( $returnResult['status']!=1 && empty($returnResult['data']) ) {
-                    $this->error($returnResult['msg']);
+                    $this->info($returnResult['msg']);
                 } else {
                     foreach ($returnResult['data'] as $train) {
                         $data[] = [
@@ -84,7 +84,7 @@ class Train extends Command
                     }
                     $this->table($headers, $data);
                 }
-                usleep(30000);
+                usleep(20000);
                 $times++;
             }
         }
