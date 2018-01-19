@@ -18,6 +18,10 @@ class TrainService
         //'K9049',
     //];
     CONST THE_TRAIN_ARRAY = [];
+    /**
+     * 最低剩余票数
+     */
+    CONST MIN_NUM = 3;
     private $theDate = "";
 
     public function __construct($date='')
@@ -50,7 +54,7 @@ class TrainService
                     'end' => $trainData[9],
                 ];
                 $ticketKey = $trainData[29];
-                if ( $ticketKey=="有" || $ticketKey>2 ) {
+                if ( $ticketKey=="有" || $ticketKey>=self::MIN_NUM ) {
                     if ( empty(self::THE_TRAIN_ARRAY) || (!empty(self::THE_TRAIN_ARRAY) &&  in_array($trainData[3], self::THE_TRAIN_ARRAY)) ) {
                         $trains[] = [
                             'train' => $trainData[3],
@@ -363,7 +367,7 @@ class TrainService
                 foreach ($trainArray as $key => $train) {
                     $trainData = explode("|", $train);
                     $ticketKey = $trainData[29];
-                    if ( $ticketKey=="有" || $ticketKey>2 ) {
+                    if ( $ticketKey=="有" || $ticketKey>=self::MIN_NUM ) {
                         if ( empty(self::THE_TRAIN_ARRAY) || (!empty(self::THE_TRAIN_ARRAY) &&  in_array($trainData[3], self::THE_TRAIN_ARRAY)) ) {
                             $trains[] = [
                                 'train' => $trainData[3],
@@ -865,10 +869,10 @@ class TrainService
     {
         // 发送163邮件
         Mail::send('emails.msg',['data'=>$title],function($message){
-            $userName = '我的车票消息';
+            $userName = $title;
             $message->from('yanzongnet@163.com', $userName);
             $to = 'yanzongnet@163.com';
-            $message->to($to)->subject('车票消息');
+            $message->to($to)->subject($title);
         });
         return true;
     }

@@ -56,6 +56,7 @@ class Train extends Command
         $times = 1;
         // 不停的刷除非刷到
         while ($setFlag) {
+            $data = [];
             $returnResult = $TrainService->searchTrainList();
             $this->info("第" . $times . "次");
             if ( $returnResult['status']==1 ) {
@@ -71,7 +72,7 @@ class Train extends Command
                 $this->table($headers, $data);
             } else {
                 if ( $returnResult['status']!=1 && empty($returnResult['data']) ) {
-                    $this->info($returnResult['msg']);
+                    $this->error($returnResult['msg']);
                 } else {
                     foreach ($returnResult['data'] as $train) {
                         $data[] = [
