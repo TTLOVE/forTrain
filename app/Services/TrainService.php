@@ -398,6 +398,94 @@ class TrainService
         return $returnData;
     }
 
+    public function getOrderPic()
+    {
+        // 获取乘客买票验证码
+        $imageUrl = "https://kyfw.12306.cn/otn/passcodeNew/getPassCodeNew?module=passenger&rand=randp&0.757505074609071";
+        $savePath = "storage/framework/cache/image.jpg";
+        $imagePath = $this->getPicAndSave($imageUrl, $savePath);
+        return $imagePath;
+    }
+
+    /**
+     * 校验验证码
+     *
+     * @param $verify　验证码信息
+     *
+     * @return array
+     */
+    public function checkOrderCha($verify, $theToken)
+    {
+        // 校验验证码
+        $checkChaData = [
+            'REPEAT_SUBMIT_TOKEN' => $theToken,
+            'randCode' => $verify,
+            'rand' => 'randp',
+            '_json_att' => ''
+        ];
+        $checkChaUrl = "https://kyfw.12306.cn/otn/passcodeNew/checkRandCodeAnsyn";
+        $captchaResult = $this->postData($checkChaUrl, $checkChaData);
+        $retryTime = 1;
+        while ($retryTime<=10 && 
+            (!isset($captchaResult['result_code']) || (isset($captchaResult['result_code']) && $captchaResult['result_code']!=4))) {
+                echo "\n";
+                var_export("验证码校验失败，第" . $retryTime . "次");
+                echo "\n";
+                var_export($captchaResult);
+                echo "\n";
+                var_export("休息80毫秒");
+                echo "\n";
+                usleep(80000);
+                $captchaResult = $this->postData($checkChaUrl, $checkChaData);
+                $retryTime++;
+            }
+        
+        if ( isset($captchaResult['result_code']) && $captchaResult['result_code']==4 ) {
+            $returnData = [
+                'status' => 1,
+            ];
+        } else {
+            // 如果10次都失败的话重新回到校验验证码页面
+            $returnData = [
+                'status' => -1,
+            ];
+        }
+        return $returnData;
+    }
+
+    public function dealOrderCode($theToken)
+    {
+        $verify = '';
+        $checkChaFlag = true;
+        $times = 1;
+        while ($checkChaFlag && $times<=10) {
+            $savePic = $TrainService->getOrderPic();
+            $imgPath = "/usr/local/nginx/html/forTrain/" . $savePic;
+            $picResult = $this->getPicMap($imgPath);
+            if ( isset($picResult) && $picResult['ret']==0 ) {
+                echo "\n";
+                var_export('第' . $times . '次校验验证码');
+                echo "\n";
+                $verify = str_replace("|", ",", $picResult['result']);
+                $checkResult = $this->checkOrderCha($verify, $theToken);
+                if ( $checkResult['status']==1 ) {
+                    $checkChaFlag = false;
+                    var_export('校验验证码成功');
+                    echo "\n";
+                } else {
+                    $this->checkChaReportError($picResult['id']);
+                    var_export('校验验证码失败');
+                    echo "\n";
+                }
+            } else {
+                var_export('获取验证码密码失败');
+                echo "\n";
+            }
+            $times++;
+        }
+        return $verify;
+    }
+
     public function addOrder($trains)
     {
         echo "\n";
@@ -533,17 +621,6 @@ class TrainService
             var_export($confirmPassengerData);
             echo "\n";
 
-            // 申请成功，往下走
-            $ifShowPassCode = $confirmPassengerData['data']['ifShowPassCode'];
-            // 如果需要显示验证码提交,退出循环，跳去提交验证码
-            if ( $ifShowPassCode!='N' ) {
-                echo "\n";
-                var_export("下单需要输入验证码");
-                echo "\n";
-                exit('退出');
-            }
-
-
             echo "\n";
             var_export("申请成功，往下走,查看排队人数");
             echo "\n";
@@ -592,6 +669,21 @@ class TrainService
             var_export($queueCountData);
             echo "\n";
 
+            // 申请成功，往下走
+            $ifShowPassCode = $confirmPassengerData['data']['ifShowPassCode'];
+            // 如果需要显示验证码提交,退出循环，跳去提交验证码
+            $orderVerify = '';
+            if ( $ifShowPassCode=='Y' ) {
+                $orderVerify = $this->dealOrderCode($theToken);
+                if ( empty($orderVerify) ) {
+                    $returnData = [
+                        'status' => 0,
+                        'msg' => '校验订单二维码失败'
+                    ];
+                    return $returnData;
+                }
+            }
+
             echo "\n";
             var_export("确认订单");
             echo "\n";
@@ -600,7 +692,7 @@ class TrainService
             $confirmOrderQuery = [
                 'passengerTicketStr' => '1,0,1,朱雁宗,1,440981199209200231,13672476388,N_1,0,1,程恒,1,440981199201181128,13672476388,N_1,0,1,程剑豪,1,440981199506131156,13672476388,N',
                 'oldPassengerStr' => '朱雁宗,1,440981199209200231,1_程恒,1,440981199201181128,1_程剑豪,1,440981199506131156,1_',
-                'randCode' => '',
+                'randCode' => $orderVerify,
                 'purpose_codes' => '00',
                 'key_check_isChange' => $key_check_isChange,
                 'leftTicketStr' => $train['leftTicket'],
