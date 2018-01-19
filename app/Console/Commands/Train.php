@@ -72,7 +72,7 @@ class Train extends Command
                 $this->table($headers, $data);
             } else {
                 if ( $returnResult['status']!=1 && empty($returnResult['data']) ) {
-                    $this->info($returnResult['msg']);
+                    $this->error($returnResult['msg']);
                 } else {
                     foreach ($returnResult['data'] as $train) {
                         $data[] = [
