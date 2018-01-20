@@ -10,9 +10,9 @@ class Train extends Command
     /**
      * 设置每天刷票时间
      */
-    protected $timeSet = [
+    private $timeSet = [
         'begin' => " 07:00:00",
-        //'begin' => " 15:00:00",
+        //'begin' => " 16:00:00",
         'end' => " 23:00:00"
     ];
     /**
@@ -126,8 +126,12 @@ class Train extends Command
                     $checkChaFlag = false;
                     $this->info("校验验证码成功");
                 } else {
-                    $TrainService->checkChaReportError($picResult['id']);
                     $this->error("校验验证码失败");
+                    $errorResult = $TrainService->checkChaReportError($picResult['id']);
+                    $this->info("错误验证码提交返回");
+                    echo "\n\n";
+                    var_export($errorResult);
+                    echo "\n\n";
                 }
             } else {
                 $this->error("获取验证码密码失败");
@@ -269,8 +273,9 @@ class Train extends Command
 
     private function timeCheck()
     {
-        $timeBegin = strtotime("Y-m-d " . $this->timeSet['begin']);
-        $timeEnd = strtotime("Y-m-d " . $this->timeSet['end']);
+        $timeBegin = strtotime(date("Y-m-d") . $this->timeSet['begin']);
+        $timeEnd = strtotime(date("Y-m-d") . $this->timeSet['end']);
+        //$nowTime = time() + 28800;
         $nowTime = time();
         if ($nowTime>=$timeBegin && $nowTime<$timeEnd ) {
             $returnData = [

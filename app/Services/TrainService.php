@@ -175,8 +175,9 @@ class TrainService
 
     public function checkChaReportError($id)
     {
-        $DaMaService = new DaMaService('TT_LOVE', 'zyz6661726');
-        $DaMaService->reportError($id);
+        $DaMaService = new DaMaService('TT_LOVE', 'zyz6673777');
+        $errorResult = $DaMaService->reportError($id);
+        return $errorResult;
     }
 
     /**
