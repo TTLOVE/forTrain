@@ -11,8 +11,8 @@ class Train extends Command
      * 设置每天刷票时间
      */
     protected $timeSet = [
-        //'begin' => " 07:00:00",
-        'begin' => " 15:00:00",
+        'begin' => " 07:00:00",
+        //'begin' => " 15:00:00",
         'end' => " 23:00:00"
     ];
     /**
