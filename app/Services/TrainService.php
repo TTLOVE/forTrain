@@ -114,7 +114,7 @@ class TrainService
      */
     public function getPicMap($picPath)
     {
-        $DaMaService = new DaMaService('TT_LOVE', 'zyz6661726');
+        $DaMaService = new DaMaService('TT_LOVE', 'zyz6673777');
         $balanceInfo = $DaMaService->getBalance();
         echo "\n\n";
         var_export($balanceInfo);
@@ -189,8 +189,10 @@ class TrainService
         // 登录用户
         $loginUrl = "https://kyfw.12306.cn/passport/web/login"; 
         $loginData = [
-            'username' => "348977791@qq.com",
-            'password' => "qq6661726",
+            //'username' => "348977791@qq.com",
+            //'password' => "qq6661726",
+            'username' => "15915863474",
+            'password' => "chengjianhao613",
             'appid' => "otn",
             '_json_att' => ''
         ];
@@ -950,7 +952,7 @@ class TrainService
         // 发送163邮件
         Mail::send('emails.msg',['data'=>$title],function($message){
             $userName = "抢票用户";
-            $message->from('yanzongnet@163.com', $userName);
+            $message->from('zzworkzz@163.com', $userName);
             $to = 'yanzongnet@163.com';
             $message->to($to)->subject("订票通知");
         });

@@ -8,6 +8,14 @@ use App\Services\TrainService;
 class Train extends Command
 {
     /**
+     * 设置每天刷票时间
+     */
+    protected $timeSet = [
+        //'begin' => " 07:00:00",
+        'begin' => " 15:00:00",
+        'end' => " 23:00:00"
+    ];
+    /**
      * The name and signature of the console command.
      *
      * @var string
@@ -88,14 +96,20 @@ class Train extends Command
                 $times++;
             }
         }
-        $this->info('有并发送邮件通知');
-        $TrainService->sendEmail("有票通知");
         $this->step2($TrainService);
     }
 
     private function step2($TrainService)
     {
         $this->info('step2');
+        $checkTimeResult = $this->timeCheck();
+        if ($checkTimeResult['status']==0) {
+            $this->error($checkTimeResult['msg']);
+            $this->step1($TrainService);
+            return false;
+        }
+        $this->info('有并发送邮件通知');
+        $TrainService->sendEmail("有票通知");
         $this->info('获取登录验证码图片');
         $checkChaFlag = true;
         $times = 1;
@@ -126,6 +140,12 @@ class Train extends Command
     private function step3($TrainService)
     {
         $this->info('step3');
+        $checkTimeResult = $this->timeCheck();
+        if ($checkTimeResult['status']==0) {
+            $this->error($checkTimeResult['msg']);
+            $this->step1($TrainService);
+            return false;
+        }
         $this->info('登录用户');
         $userLoginResult = $TrainService->userLogin();
         if ( $userLoginResult['status']!=1 ) {
@@ -139,6 +159,12 @@ class Train extends Command
     private function step4($TrainService)
     {
         $this->info('step4');
+        $checkTimeResult = $this->timeCheck();
+        if ($checkTimeResult['status']==0) {
+            $this->error($checkTimeResult['msg']);
+            $this->step1($TrainService);
+            return false;
+        }
         $this->info('登录首页');
         $TrainService->loginHome();
         $this->step5($TrainService);
@@ -147,6 +173,12 @@ class Train extends Command
     private function step5($TrainService)
     {
         $this->info('step5');
+        $checkTimeResult = $this->timeCheck();
+        if ($checkTimeResult['status']==0) {
+            $this->error($checkTimeResult['msg']);
+            $this->step1($TrainService);
+            return false;
+        }
         $this->info('下单开始');
         $this->info('检查用户并获取:newapptk');
         $checkLoginData = $TrainService->checkUser();
@@ -161,6 +193,12 @@ class Train extends Command
     private function step6($TrainService, $newapptk)
     {
         $this->info('step6');
+        $checkTimeResult = $this->timeCheck();
+        if ($checkTimeResult['status']==0) {
+            $this->error($checkTimeResult['msg']);
+            $this->step1($TrainService);
+            return false;
+        }
         $this->info('验证这个客户端可以登录');
         $checkLoginData = $TrainService->checkUserLoginStatus($newapptk);
         if ( $checkLoginData['status']!=1 ) {
@@ -174,6 +212,12 @@ class Train extends Command
     private function step7($TrainService)
     {
         $this->info('step7');
+        $checkTimeResult = $this->timeCheck();
+        if ($checkTimeResult['status']==0) {
+            $this->error($checkTimeResult['msg']);
+            $this->step1($TrainService);
+            return false;
+        }
         $this->info('检验用户信息');
         $checkLoginData = $TrainService->checkUserData();
         if ( $checkLoginData['status']!=1 ) {
@@ -187,6 +231,12 @@ class Train extends Command
     private function step8($TrainService)
     {
         $this->info('step8');
+        $checkTimeResult = $this->timeCheck();
+        if ($checkTimeResult['status']==0) {
+            $this->error($checkTimeResult['msg']);
+            $this->step1($TrainService);
+            return false;
+        }
         $this->info('查看火车余票');
         $checkLoginData = $TrainService->checkTicket();
         if ( $checkLoginData['status']!=1 ) {
@@ -200,6 +250,12 @@ class Train extends Command
     private function step9($TrainService, $trains)
     {
         $this->info('step9');
+        $checkTimeResult = $this->timeCheck();
+        if ($checkTimeResult['status']==0) {
+            $this->error($checkTimeResult['msg']);
+            $this->step1($TrainService);
+            return false;
+        }
         $this->info('添加订单');
         $checkLoginData = $TrainService->addOrder($trains);
         if ( $checkLoginData['status']!=1 ) {
@@ -209,5 +265,23 @@ class Train extends Command
         }
         $TrainService->sendEmail("请尽快支付");
         $this->info('添加订单成功,结束');
+    }
+
+    private function timeCheck()
+    {
+        $timeBegin = strtotime("Y-m-d " . $this->timeSet['begin']);
+        $timeEnd = strtotime("Y-m-d " . $this->timeSet['end']);
+        $nowTime = time();
+        if ($nowTime>=$timeBegin && $nowTime<$timeEnd ) {
+            $returnData = [
+                'status' => 1
+            ];
+        } else {
+            $returnData = [
+                'status' => 0,
+                'msg' => '时间不适合刷票,当前时间：' . date("Y-m-d H:i:s", $nowTime)
+            ];
+        }
+        return $returnData;
     }
 }

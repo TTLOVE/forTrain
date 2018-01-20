@@ -57,7 +57,8 @@ return [
     |
     */
 
-    'from' => ['address' => 'yanzongnet@163.com', 'name' => 'zyzzyz'],
+    //'from' => ['address' => 'yanzongnet@163.com', 'name' => 'zyzzyz'],
+    'from' => ['address' => 'zzworkzz@163.com', 'name' => 'zyz'],
     //'from' => [
         //'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
         //'name' => env('MAIL_FROM_NAME', 'Example'),
@@ -88,10 +89,12 @@ return [
     */
 
     //'username' => env('MAIL_USERNAME'),
-    'username' => 'yanzongnet@163.com',
+    //'username' => 'yanzongnet@163.com',
+    'username' => 'zzworkzz@163.com',
 
     //'password' => env('MAIL_PASSWORD'),
-    'password' => 'zyz6661726',
+    // 授权码
+    'password' => 'qq6661726',
 
     /*
     |--------------------------------------------------------------------------
