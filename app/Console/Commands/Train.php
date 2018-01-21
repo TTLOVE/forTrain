@@ -51,6 +51,7 @@ class Train extends Command
     public function handle()
     {
         $this->info('开始');
+        $this->info(date("Y-m-d H:i:s"));
         $TrainService = new TrainService($this->argument('date'));
         $this->step1($TrainService);
     }
@@ -58,12 +59,14 @@ class Train extends Command
     private function step1($TrainService)
     {
         $this->info('step1');
+        $this->info(date("Y-m-d H:i:s"));
         $this->info('获取车次');
         $headers = ['车次', '开始', '结束', '票数'];
         $setFlag = true;
         $times = 1;
         // 不停的刷除非刷到
         while ($setFlag) {
+            $this->info(date("Y-m-d H:i:s"));
             $data = [];
             $returnResult = $TrainService->searchTrainList();
             $this->info("第" . $times . "次");
@@ -102,6 +105,7 @@ class Train extends Command
     private function step2($TrainService)
     {
         $this->info('step2');
+        $this->info(date("Y-m-d H:i:s"));
         $checkTimeResult = $this->timeCheck();
         if ($checkTimeResult['status']==0) {
             $this->error($checkTimeResult['msg']);
@@ -144,6 +148,7 @@ class Train extends Command
     private function step3($TrainService)
     {
         $this->info('step3');
+        $this->info(date("Y-m-d H:i:s"));
         $checkTimeResult = $this->timeCheck();
         if ($checkTimeResult['status']==0) {
             $this->error($checkTimeResult['msg']);
@@ -163,6 +168,7 @@ class Train extends Command
     private function step4($TrainService)
     {
         $this->info('step4');
+        $this->info(date("Y-m-d H:i:s"));
         $checkTimeResult = $this->timeCheck();
         if ($checkTimeResult['status']==0) {
             $this->error($checkTimeResult['msg']);
@@ -177,6 +183,7 @@ class Train extends Command
     private function step5($TrainService)
     {
         $this->info('step5');
+        $this->info(date("Y-m-d H:i:s"));
         $checkTimeResult = $this->timeCheck();
         if ($checkTimeResult['status']==0) {
             $this->error($checkTimeResult['msg']);
@@ -197,6 +204,7 @@ class Train extends Command
     private function step6($TrainService, $newapptk)
     {
         $this->info('step6');
+        $this->info(date("Y-m-d H:i:s"));
         $checkTimeResult = $this->timeCheck();
         if ($checkTimeResult['status']==0) {
             $this->error($checkTimeResult['msg']);
@@ -216,6 +224,7 @@ class Train extends Command
     private function step7($TrainService)
     {
         $this->info('step7');
+        $this->info(date("Y-m-d H:i:s"));
         $checkTimeResult = $this->timeCheck();
         if ($checkTimeResult['status']==0) {
             $this->error($checkTimeResult['msg']);
@@ -235,6 +244,7 @@ class Train extends Command
     private function step8($TrainService)
     {
         $this->info('step8');
+        $this->info(date("Y-m-d H:i:s"));
         $checkTimeResult = $this->timeCheck();
         if ($checkTimeResult['status']==0) {
             $this->error($checkTimeResult['msg']);
@@ -254,6 +264,7 @@ class Train extends Command
     private function step9($TrainService, $trains)
     {
         $this->info('step9');
+        $this->info(date("Y-m-d H:i:s"));
         $checkTimeResult = $this->timeCheck();
         if ($checkTimeResult['status']==0) {
             $this->error($checkTimeResult['msg']);
